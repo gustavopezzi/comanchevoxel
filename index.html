@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Comanche Voxel Terrain Space (Lab)</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <link rel="stylesheet" type="text/css" href="css/fonts.css">
+        <link rel="stylesheet" type="text/css" href="css/purplegui.css">
+        <link rel="stylesheet" type="text/css" href="css/base.css">
+        <script type="text/javascript" src="js/comanchevoxel.js"></script>
+    </head>
+    <body>
+        <canvas id="canvas-terrain" width="512" height="256"></canvas>
+        <div class="canvas-bottom-border"></div>
+        <div class="purplebox">
+            <div class="left-panel">
+                <button class="button"><img src="img/up.png"></button> : front<br/>
+                <button class="button"><img src="img/down.png"></button> : back<br/>
+                <button class="button"><img src="img/left.png"></button> : left<br/>
+                <button class="button"><img src="img/right.png"></button> : right<br/>
+            </div>
+            <div class="right-panel">
+                <button class="button">E</button> : up<br/>
+                <button class="button">D</button> : down<br/>
+                <button class="button">W</button> : pitch down<br/>
+                <button class="button">S</button> : pitch up<br/>
+            </div>
+        </div>
+        <div class="purplebox-right">
+            <div class="middle-panel">
+                <div><img id="map-thumb" src="thumbs/map1.png" width="100" height="100"/><div>
+                <button class="button-click" onclick="loadMap();">random map</button>
+            </div>
+        </div>
+    </body>
+</html>
