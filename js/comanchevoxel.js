@@ -3,10 +3,15 @@ var MAP_N = 30;
 var CANVAS_WIDTH = 512;
 var CANVAS_HEIGHT = 256;
 
+var MAX_HEIGHT = 200;
+var MIN_HEIGHT = 10;
+var MAX_PITCH = -200;
+var MIN_PITCH = 20;
+
 var camera = {
     x: 512,
     y: 800,
-    height: 110,
+    height: 100,
     angle: 0,
     v: -100
 };
@@ -56,45 +61,109 @@ function updateCamera() {
         camera.y += 3. * Math.cos(camera.angle);
         kPressed = true;
     }
-    if (kUp) {
+    if (kUp && camera.height < MAX_HEIGHT) {
         camera.height += 2;
         kPressed = true;
     }
-    if (kDown) {
+    if (kDown && camera.height > MIN_HEIGHT) {
         camera.height -= 2;
         kPressed = true;
     }
-    if (kLookUp) {
+    if (kLookUp && camera.v < MIN_PITCH) {
         camera.v += 2;
         kPressed = true;
     }
-    if (kLookDown) {
+    if (kLookDown && camera.v > MAX_PITCH) {
         camera.v -= 2;
         kPressed = true;
     }
 }
 
+function bLine(x0, y0, x1, y1) {
+    var dx = Math.abs(x1 - x0);
+    var sx = (x0 < x1) ? 1 : -1;
+    var dy = Math.abs(y1 - y0);
+    var sy = (y0 < y1) ? 1 : -1;
+    var err = (dx > dy ? dx : -dy) / 2;
+
+    while (true) {
+        setPixel(x0, y0);
+
+        if (x0 === x1 && y0 === y1) {
+            break;
+        }
+
+        var e2 = err;
+
+        if (e2 > -dx) {
+            err -= dy;
+            x0 += sx;
+        }
+
+        if (e2 < dy) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+function bRectangle(x, y, width, height) {
+    bLine(x, y, x + width, y);
+    bLine(x + width, y, x + width, y + height);
+    bLine(x + width, y + height, x, y + height);
+    bLine(x, y + height, x, y);
+}
+
+function setPixel(x, y) {
+    context.fillRect(x - 1, y - 1, 2, 2);
+}
+
 function drawHud() {
-    context.lineWidth = 1;
-    context.strokeStyle = '#00FF00';
+    // draw navigation hud
+    context.fillStyle = '#00FF00';
+    bLine(CANVAS_WIDTH/2 - 25, CANVAS_HEIGHT/2, CANVAS_WIDTH/2 - 15, CANVAS_HEIGHT/2);
+    bLine(CANVAS_WIDTH/2 - 15, CANVAS_HEIGHT/2, CANVAS_WIDTH/2 - 8, CANVAS_HEIGHT/2 + 7);
+    bLine(CANVAS_WIDTH/2 - 8, CANVAS_HEIGHT/2 + 7, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 1);
+    bLine(CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 1, CANVAS_WIDTH/2 + 8, CANVAS_HEIGHT/2 + 7);
+    bLine(CANVAS_WIDTH/2 + 8, CANVAS_HEIGHT/2 + 7, CANVAS_WIDTH/2 + 15, CANVAS_HEIGHT/2);
+    bLine(CANVAS_WIDTH/2 + 15, CANVAS_HEIGHT/2, CANVAS_WIDTH/2 + 25, CANVAS_HEIGHT/2);
 
-    // draw target cross
-    context.beginPath();
-    context.moveTo(CANVAS_WIDTH/2 - 5, CANVAS_HEIGHT/2);
-    context.lineTo(CANVAS_WIDTH/2 + 5, CANVAS_HEIGHT/2);
-    context.stroke();
-    context.beginPath();
-    context.moveTo(CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 5);
-    context.lineTo(CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 5);
-    context.stroke();
+    // draw left and right hud indicators
+    bLine(CANVAS_WIDTH/2 - 180, CANVAS_HEIGHT/2 - 100, CANVAS_WIDTH/2 - 180, CANVAS_HEIGHT/2 + 100);
+    bLine(CANVAS_WIDTH/2 + 180, CANVAS_HEIGHT/2 - 100, CANVAS_WIDTH/2 + 180, CANVAS_HEIGHT/2 + 100);
 
-    // draw bottom border
-    context.beginPath();
-    context.lineWidth = 2;
-    context.strokeStyle = '#4A5B89';
-    context.moveTo(0, CANVAS_HEIGHT);
-    context.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT);
-    context.stroke();
+    // draw left and right vertical angle indicators
+    var i = CANVAS_HEIGHT/2 - 100;
+    while (i <= CANVAS_HEIGHT/2 + 100) {
+        bLine(CANVAS_WIDTH/2 - 184, i, CANVAS_WIDTH/2 - 180, i);
+        bLine(CANVAS_WIDTH/2 + 180, i, CANVAS_WIDTH/2 + 184, i);
+        i += 20;
+    }
+
+    context.font = '10px CharriotDeluxe';
+
+    // draw altitude text
+    bRectangle(CANVAS_WIDTH/2 - 245, CANVAS_HEIGHT/2 - 10, 50, 20);
+    context.fillText('ALT ' + camera.height, CANVAS_WIDTH/2 - 240, CANVAS_HEIGHT/2 + 3);
+
+    // draw angle of attack text
+    context.font = '10px CharriotDeluxe';
+    bRectangle(CANVAS_WIDTH/2 + 195, CANVAS_HEIGHT/2 - 10, 50, 20);
+    context.fillText('AOA ' + -(camera.v + 100), CANVAS_WIDTH/2 + 200, CANVAS_HEIGHT/2 + 3);
+
+    // draw horizontal heading
+    degCameraAngle = Math.abs((camera.angle * 57.295779513) % 360);
+    degCameraAngle = degCameraAngle.toFixed(0);
+    degCameraAngle = (degCameraAngle < 100) ? '0' + degCameraAngle : degCameraAngle;
+    degCameraAngle = (degCameraAngle < 10) ? '0' + degCameraAngle : degCameraAngle;
+    context.fillText(degCameraAngle + '°', CANVAS_WIDTH/2 - 8, CANVAS_HEIGHT/2 - 100);
+    bLine(CANVAS_WIDTH/2 - 3, CANVAS_HEIGHT/2 - 115, CANVAS_WIDTH/2 + 2, CANVAS_HEIGHT/2 - 115);
+    bLine(CANVAS_WIDTH/2 - 3, CANVAS_HEIGHT/2 - 115, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 112);
+    bLine(CANVAS_WIDTH/2 + 3, CANVAS_HEIGHT/2 - 115, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 112);
+
+    // draw bottom purple border
+    context.fillStyle = '#4A5B89';
+    bLine(0, CANVAS_HEIGHT, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
 function updateCanvas() {
@@ -129,8 +198,6 @@ function updateCanvas() {
     imageData.data.set(buf8);
 
     context.putImageData(imageData, 0, 0);
-
-    // draw hud
     drawHud();
 
     if (!kPressed) {
@@ -202,7 +269,7 @@ function rayCast(line, x1, y1, x2, y2, d) {
 }
 
 function detectKeysDown(e) {
-    switch(e.keyCode) {
+    switch (e.keyCode) {
         case 37: kLeft     = true; break; // left
         case 39: kRight    = true; break; // right
         case 38: kForward  = true; break; // up
@@ -222,7 +289,7 @@ function detectKeysDown(e) {
 }
 
 function detectKeysUp(e) {
-    switch(e.keyCode) {
+    switch (e.keyCode) {
         case 37: kLeft     = false; break; // left
         case 39: kRight    = false; break; // right
         case 38: kForward  = false; break; // up
